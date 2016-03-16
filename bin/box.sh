@@ -4,7 +4,20 @@
 
 config='/srv/uw-projects/box/configuration/default.conf'
 
-source ../configuration/default.conf
+source ${config}
+
+if [ ${provisioner} == 'ec2' ]; then
+  kitchen_yml='../templates/kitchen.ec2.yml'
+  [ -n "${ssh_key_id}" ] || (echo "[Error] Please specify 'ssh_key_id'" ; exit 127)
+  [ -n "${region}" ] || (echo "[Error] Please specify 'region'" ; exit 127)
+  [ -n "${image_id}" ] || (echo "[Error] Please specify 'image_id'" ; exit 127)
+  [ -n "${instance_type}" ] || (echo "[Error] Please specify 'instance_type'" ; exit 127)
+elif [ ${provisioner} == 'vagrant' ]; then
+  kitchen_yml='..templates/kitchen.vagrant.yml'
+else
+  echo "[ERROR] - Unknown provisioner: ${provisioner}. Use 'ec2' or 'vagrant'"
+  exit 127
+fi
 
 check_params(){
   echo "Validate Configuration File";
@@ -16,10 +29,17 @@ make-env(){
   chef generate cookbook ${cookbook_name} --berks
 }
 
-edit(){
-  $EDITOR ${config} || echo "Please set the environment variable:\
+edit-config(){
+  $EDITOR ${config} 2>/dev/null || echo "Please set the environment variable:\
   export EDITOR=vim
   "
+}
+
+workon(){
+  echo "Changing directory to ${base_dir}/${cookbook_name}"
+  cd ${base_dir}/${cookbook_name}
+  echo "Directory contents:"
+  ls -ltr
 }
 
 show(){
@@ -59,10 +79,12 @@ help(){
   echo ""
   echo "Available Commands: "
   echo ""
-  echo "box show           # shows currently running box"
-  echo "box create         # creates a box based on config.sh"
-  echo "box destroy        # destroys a box"
-  echo "box show-config    # Shows running config"
+  echo "box create         # creates a vm based on config.sh"
+  echo "box provision      # creates and provisions a vm"
+  echo "box destroy        # destroys a vm"
+  echo "box workon         # changes to the vm's working directory"
+  echo "box show-config    # shows running configuration"
+  echo "box edit-config    # edit configuration "
   echo ""
 }
 
@@ -72,9 +94,9 @@ ssh(){
   kitchen login
 }
 
-execute-main(){
+box(){
   func=${1}
   $func
 }
 
-execute-main ${1}
+box ${1}
