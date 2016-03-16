@@ -1,0 +1,27 @@
+---
+driver:
+  name: ec2
+  region: ${region}
+  aws_ssh_key_id: ${ssh_key_id}
+  availability_zone: b
+  require_chef_omnibus: true
+  associate_public_ip: true
+  instance_type: ${instance_type}
+  interface: dns
+
+transport:
+  ssh_key: ~/.ssh/${ssh_key_id}
+  connection_timeout: 10
+  connection_retries: 5
+
+provisioner:
+  name: chef_solo
+
+platforms:
+  - name: ${name}
+
+suites:
+  - name: ${name}
+    run_list:
+      - recipe[the-cookbook::default]
+    attributes:
