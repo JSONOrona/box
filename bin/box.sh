@@ -34,10 +34,10 @@ destroy(){
 
 create(){
   echo "Creating new machine...";
-  git clone ${repo}
+  git clone ${repo} 2>/dev/null || echo "Skipped git clone"
   eval "cat <<EOF
-  $(<templates/${kitchen_yml})
-  EOF" > ${base_dir}/${cookbook_name}/.kitchen.yml
+  $(<${kitchen_yml})
+  EOF" > ${cookbook_name}/.kitchen.yml
   echo "Machine details:";
   cd ${base_dir}/${cookbook_name}/
   kitchen create
@@ -60,9 +60,8 @@ help(){
   echo "Available Commands: "
   echo ""
   echo "box create         # creates a vm based on config.sh"
+  echo "box ssh"
   echo "box provision      # creates and provisions a vm"
-  echo "box destroy        # destroys a vm and configuration"
-  echo "box workon         # changes to the vm's working directory"
   echo "box show-config    # shows running configuration"
   echo ""
 }
