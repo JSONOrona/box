@@ -2,45 +2,21 @@
 #set -x
 #EDITOR=vi
 
-config='/srv/uw-projects/box/configuration/default.conf'
+base_dir="${HOME}/box"
+cookbook_name="development-cookbook"
+config='../configuration/default.conf'
+repo='https://github.com/redja/development-cookbook.git'
 
 source ${config}
 
 if [ ${provisioner} == 'ec2' ]; then
   kitchen_yml='../templates/kitchen.ec2.yml'
-  [ -n "${ssh_key_id}" ] || (echo "[Error] Please specify 'ssh_key_id'" ; exit 127)
-  [ -n "${region}" ] || (echo "[Error] Please specify 'region'" ; exit 127)
-  [ -n "${image_id}" ] || (echo "[Error] Please specify 'image_id'" ; exit 127)
-  [ -n "${instance_type}" ] || (echo "[Error] Please specify 'instance_type'" ; exit 127)
 elif [ ${provisioner} == 'vagrant' ]; then
   kitchen_yml='..templates/kitchen.vagrant.yml'
 else
   echo "[ERROR] - Unknown provisioner: ${provisioner}. Use 'ec2' or 'vagrant'"
   exit 127
 fi
-
-check_params(){
-  echo "Validate Configuration File";
-}
-
-make-env(){
-  mkdir -p ${base_dir}
-  cd ${base_dir}
-  chef generate cookbook ${cookbook_name} --berks
-}
-
-edit-config(){
-  $EDITOR ${config} 2>/dev/null || echo "Please set the environment variable:\
-  export EDITOR=vim
-  "
-}
-
-workon(){
-  echo "Changing directory to ${base_dir}/${cookbook_name}"
-  cd ${base_dir}/${cookbook_name}
-  echo "Directory contents:"
-  ls -ltr
-}
 
 show(){
   echo "Currently provisioned boxes:"
@@ -58,15 +34,19 @@ destroy(){
 
 create(){
   echo "Creating new machine...";
-  make-env
-  cd ${base_dir}/${cookbook_name}
+  git clone ${repo}
+  eval "cat <<EOF
+  $(<templates/${kitchen_yml})
+  EOF" > ${base_dir}/${cookbook_name}/.kitchen.yml
   echo "Machine details:";
+  cd ${base_dir}/${cookbook_name}/
   kitchen create
 }
 
 provision(){
   echo "Provisioning the box";
   cd ${base_dir}/${cookbook_name}
+  create
   kitchen converge
 }
 
@@ -81,10 +61,9 @@ help(){
   echo ""
   echo "box create         # creates a vm based on config.sh"
   echo "box provision      # creates and provisions a vm"
-  echo "box destroy        # destroys a vm"
+  echo "box destroy        # destroys a vm and configuration"
   echo "box workon         # changes to the vm's working directory"
   echo "box show-config    # shows running configuration"
-  echo "box edit-config    # edit configuration "
   echo ""
 }
 

@@ -15,13 +15,29 @@ transport:
   connection_retries: 5
 
 provisioner:
-  name: chef_solo
+  name: chef_zero
 
 platforms:
-  - name: ${name}
+  - name: ${ec2_platform_name}
 
 suites:
-  - name: ${name}
+  - name: default
     run_list:
       - recipe[the-cookbook::default]
+      - recipe[development-cookbook::desktop]
     attributes:
+      vnc:
+        account_username: ${vnc_username}
+        account_password: ${vnc_password}
+      development:
+        files_url: ${ftp_url}
+        workspace: ~/workspace
+        mysql_version: ${mysql_version}
+      java:
+        jdk_version: ${open_jdk_version}
+      idea:
+        version: ${intellij_version}
+        setup_dir: /opt
+        64bits:
+          Xmx: ${intellij_Xmx}
+          Xms: ${intellij_Xms}

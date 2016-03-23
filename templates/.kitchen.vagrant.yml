@@ -1,0 +1,38 @@
+---
+driver:
+  name: vagrant
+  customize:
+    memory: ${vm_memory}
+    cpus: ${vm_cpus}
+
+provisioner:
+  name: chef_zero
+
+platforms:
+  - name: ${vm_platform}
+    driver:
+      gui: true
+
+suites:
+  - name: default
+    driver:
+      vm_hostname: devbox
+    run_list:
+      - recipe[development-cookbook::default]
+      - recipe[development-cookbook::desktop]
+    attributes:
+      vnc:
+        account_username: ${vnc_username}
+        account_password: ${vnc_password}
+      development:
+        files_url: ${ftp_url}
+        workspace: ~/workspace
+        mysql_version: ${mysql_version}
+      java:
+        jdk_version: ${open_jdk_version}
+      idea:
+        version: ${intellij_version}
+        setup_dir: /opt
+        64bits:
+          Xmx: ${intellij_Xmx}
+          Xms: ${intellij_Xms}

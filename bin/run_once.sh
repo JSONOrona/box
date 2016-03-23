@@ -1,5 +1,10 @@
 #!/bin/bash
 
+export EDITOR=vim
+export
+
+sudo pip install awscli
+
 yum update;
 yum groupinstall "Development tools";
 yum install libvirt-devel libxslt-devel libxml2-devel libvirt-devel libguestfs-tools-c ruby-devel;
