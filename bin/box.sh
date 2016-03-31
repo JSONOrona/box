@@ -4,15 +4,15 @@
 
 base_dir="${HOME}/box"
 cookbook_name="development-cookbook"
-config='../configuration/default.conf'
+config="${base_dir}/configuration/default.conf"
 repo='https://github.com/redja/development-cookbook.git'
 
 source ${config}
 
 if [ ${provisioner} == 'ec2' ]; then
-  kitchen_yml='../templates/kitchen.ec2.yml'
+  kitchen_yml="${base_dir}/templates/.kitchen.ec2.yml"
 elif [ ${provisioner} == 'vagrant' ]; then
-  kitchen_yml='..templates/kitchen.vagrant.yml'
+  kitchen_yml="${base_dir}/templates/.kitchen.vagrant.yml"
 else
   echo "[ERROR] - Unknown provisioner: ${provisioner}. Use 'ec2' or 'vagrant'"
   exit 127
@@ -28,16 +28,25 @@ show(){
 
 destroy(){
   echo "Destroying ${hostname} box:";
-  cd ${base_dir}/${cookbook_name}
+  cd  ${base_dir}/${cookbook_name}
   kitchen destroy
+}
+
+clone_repo(){
+  cd ..
+  git clone ${repo}  2>/dev/null || echo "Skipped git clone"
 }
 
 create(){
   echo "Creating new machine...";
-  git clone ${repo} 2>/dev/null || echo "Skipped git clone"
+  clone_repo
+  cd bin
   eval "cat <<EOF
   $(<${kitchen_yml})
-  EOF" > ${cookbook_name}/.kitchen.yml
+  EOF" > ${base_dir}/${cookbook_name}/.kitchen.yml
+  # Bug fix
+  sed -i.bu 's/EOF//' ${base_dir}/${cookbook_name}/.kitchen.yml
+  sed -i.bu 's/  ---/---/' ${base_dir}/${cookbook_name}/.kitchen.yml
   echo "Machine details:";
   cd ${base_dir}/${cookbook_name}/
   kitchen create
@@ -68,8 +77,25 @@ help(){
 
 ssh(){
   echo "Logging into box"
-  cd ${base_dir}/${cookbook_name}
+  cd ../${cookbook_name}
   kitchen login
+}
+
+# function aliases
+box-show(){
+  show
+}
+
+box-create(){
+  create
+}
+
+box-destroy(){
+  destroy
+}
+
+box-ssh(){
+  ssh
 }
 
 box(){
